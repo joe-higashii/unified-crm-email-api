@@ -1,0 +1,17 @@
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+
+# Dependency directories
+node_modules/
+dist/
+
+# dotenv environment variables file
+.env
+
+# VS Code settings
+.vscode/*

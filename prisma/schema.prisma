@@ -1,0 +1,162 @@
+//schema.prisma
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  extensions = [pg_trgm, pgcrypto]
+}
+
+model Usuario {
+  id           String         @id @default(uuid())
+  nome         String
+  email        String         @unique
+  senha_hash   String         @map("senha_hash")
+  plano        PlanoUsuario   @default(GRATIS)
+  role         UserRole       @default(USER)
+  integracoes  Integracao[]
+  resetTokens  PasswordResetToken[]
+  criadoEm     DateTime       @default(now()) @map("created_at")
+  atualizadoEm DateTime       @updatedAt @map("updated_at")
+  deletedAt    DateTime?      @map("deleted_at")
+
+  @@index([email], name: "idx_usuario_email")
+  @@map("usuarios")
+}
+
+model Integracao {
+  id             String         @id @default(uuid())
+  tipo           TipoIntegracao
+  provedor       ProvedorCRM    // Enum para provedores suportados
+  modoTeste      Boolean        @default(true)
+  credenciais    String         // Criptografado com AES-256-GCM
+  usuario        Usuario        @relation(fields: [usuarioId], references: [id])
+  usuarioId      String
+  leads          Lead[]
+  campanhas      Campanha[]
+  sincronizadoEm DateTime?
+  camposExtras   Json?          // Configurações específicas do provedor
+
+  @@unique([usuarioId, provedor], name: "unico_provedor_por_usuario")
+  @@index([tipo, modoTeste])
+  @@map("integracoes")
+}
+
+model Lead {
+  id            String     @id @default(uuid())
+  email         String     @db.VarChar(255)
+  nome          String?
+  telefone      String?
+  status        StatusLead @default(NOVO)
+  integracao    Integracao @relation(fields: [integracaoId], references: [id])
+  integracaoId  String
+  camposCustom  Json?      // Mapeamento dinâmico de campos do CRM
+  criadoEm      DateTime   @default(now())
+  atualizadoEm  DateTime   @updatedAt
+  deletedAt     DateTime?
+
+  @@index([email], name: "idx_leads_email")
+  @@index([status], name: "idx_leads_status")
+  @@index([integracaoId, status], name: "idx_leads_integracao_status")
+  @@map("leads")
+}
+
+model Campanha {
+  id              String       @id @default(uuid())
+  nome            String
+  template        String       // HTML com Handlebars
+  agendamento     DateTime
+  status          StatusCampanha @default(RASCUNHO)
+  integracao      Integracao   @relation(fields: [integracaoId], references: [id])
+  integracaoId    String
+  metricas        MetricaCampanha[]
+  parametros      Json         // Configurações de disparo
+  modoTeste       Boolean      @default(true)
+  criadoEm        DateTime     @default(now())
+  atualizadoEm    DateTime     @updatedAt
+
+  @@index([status, agendamento])
+  @@map("campanhas")
+}
+
+model MetricaCampanha {
+  id          String    @id @default(uuid())
+  campanha    Campanha  @relation(fields: [campanhaId], references: [id])
+  campanhaId  String
+  aberturas   Int
+  cliques     Int
+  rejeicoes   Int
+  timestamp   DateTime  @default(now())
+
+  @@index([campanhaId, timestamp])
+  @@map("metricas_campanha")
+}
+
+// Entidades de Suporte
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId String
+  expiraEm  DateTime
+  usado     Boolean  @default(false)
+  token     String   @unique
+
+  @@index([usuarioId])
+  @@map("password_reset_tokens")
+}
+
+// Enums Estruturados
+enum PlanoUsuario {
+  GRATIS
+  PRO
+  ENTERPRISE
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  API
+}
+
+enum TipoIntegracao {
+  CRM
+  EMAIL_MARKETING
+}
+
+enum ProvedorCRM {
+  SALESFORCE
+  ZOHO_CRM
+  PIPEDRIVE
+  HUBSPOT
+}
+
+enum ProvedorEmail {
+  ZOHO_CAMPAIGNS
+  MAILCHIMP
+  SENDGRID
+}
+
+enum StatusLead {
+  NOVO
+  CONTATADO
+  CONVERTIDO
+  INATIVO
+}
+
+enum StatusCampanha {
+  RASCUNHO
+  AGENDADA
+  ENVIANDO
+  ENVIADA
+  CANCELADA
+}
+
