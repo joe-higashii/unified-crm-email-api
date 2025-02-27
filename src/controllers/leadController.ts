@@ -2,10 +2,9 @@
 
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { createLead, getLeads } from '../services/leadService';
+import { createLead, getLeads, updateLead, deleteLead } from '../services/leadService';
 import { StatusLead } from '@prisma/client';
 
-// Esquema Zod para criação de lead
 const createLeadSchema = z.object({
   email: z.string().email("Email inválido"),
   nome: z.string().optional(),
@@ -15,6 +14,8 @@ const createLeadSchema = z.object({
   camposCustom: z.any().optional(),
 });
 
+const updateLeadSchema = createLeadSchema.partial();
+
 export const createLeadController = async (req: Request, res: Response): Promise<void> => {
   try {
     const data = createLeadSchema.parse(req.body);
@@ -23,11 +24,7 @@ export const createLeadController = async (req: Request, res: Response): Promise
     return;
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({
-        error: 'Dados inválidos',
-        issues: error.errors,
-        docs: '/api-docs/errors#createLead'
-      });
+      res.status(400).json({ error: 'Dados inválidos', issues: error.errors, docs: '/api-docs/errors#createLead' });
       return;
     }
     console.error(error);
@@ -48,5 +45,34 @@ export const getLeadsController = async (req: Request, res: Response): Promise<v
   }
 };
 
-// criar updateLead e deleteLead
+export const updateLeadController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const data = updateLeadSchema.parse(req.body);
+    const lead = await updateLead(id, data);
+    res.status(200).json({ message: 'Lead atualizado com sucesso!', lead });
+    return;
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Dados inválidos', issues: error.errors, docs: '/api-docs/errors#updateLead' });
+      return;
+    }
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao atualizar lead.', docs: '/api-docs/errors#updateLead' });
+    return;
+  }
+};
+
+export const deleteLeadController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    await deleteLead(id);
+    res.status(200).json({ message: 'Lead removido com sucesso!' });
+    return;
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao remover lead.', docs: '/api-docs/errors#deleteLead' });
+    return;
+  }
+};
 
