@@ -1,7 +1,7 @@
 {
   "name": "unified-crm-email-api",
   "version": "1.0.0",
-  "description": "This project is designed to provide seamless integration between CRMs and email marketing platforms. It focuses on inclusivity, scalability, and ease of use for developers and non-technical users alike.",
+  "description": "API para integração entre CRMs e plataformas de email com foco em inclusão, escalabilidade e facilidade de uso.",
   "main": "index.js",
   "directories": {
     "test": "tests"
@@ -17,16 +17,23 @@
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^6.4.1",
+    "axios": "^1.8.1",
+    "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
     "nodemon": "^3.1.9",
-    "ts-node": "^10.9.2"
+    "swagger-ui-express": "^5.0.1",
+    "ts-node": "^10.9.2",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.13.5",
+    "@types/swagger-ui-express": "^4.1.8",
     "eslint": "^9.21.0",
     "prettier": "^3.5.2",
     "prisma": "^6.4.1",
