@@ -4,14 +4,12 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { registerUser, loginUser } from '../services/authService';
 
-// Esquema Zod para validação do cadastro
 const registerSchema = z.object({
   nome: z.string().min(1, "Nome é obrigatório"),
   email: z.string().email("Email inválido"),
   senha: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
 });
 
-// Esquema Zod para validação do login
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
   senha: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
@@ -25,11 +23,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     return;
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({
-        error: 'Dados inválidos',
-        issues: error.errors,
-        docs: '/api-docs/errors#register'
-      });
+      res.status(400).json({ error: 'Dados inválidos', issues: error.errors, docs: '/api-docs/errors#register' });
       return;
     }
     if (error.message === 'Email já cadastrado.') {
@@ -50,11 +44,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     return;
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({
-        error: 'Dados inválidos',
-        issues: error.errors,
-        docs: '/api-docs/errors#login'
-      });
+      res.status(400).json({ error: 'Dados inválidos', issues: error.errors, docs: '/api-docs/errors#login' });
       return;
     }
     if (error.message === 'Usuário não encontrado.' || error.message === 'Credenciais inválidas.') {

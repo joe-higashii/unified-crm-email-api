@@ -5,7 +5,6 @@ import { Request, Response, NextFunction } from 'express';
 export class APIError extends Error {
   public code: number;
   public userGuidance?: string;
-
   constructor(code: number, message: string, userGuidance?: string) {
     super(message);
     this.code = code;
@@ -23,7 +22,6 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
     });
     return;
   }
-
   res.status(500).json({
     error: 'Erro interno no servidor.',
     guidance: 'Entre em contato com o suporte se o problema persistir.',
