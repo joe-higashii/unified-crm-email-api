@@ -1,4 +1,5 @@
 //index.ts
+
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
@@ -9,6 +10,7 @@ import authRoutes from './routes/authRoutes';
 import leadRoutes from './routes/leadRoutes';
 import integracaoRoutes from './routes/integracaoRoutes';
 import campanhaRoutes from './routes/campanhaRoutes';
+import relatorioRoutes from './routes/relatorioRoutes';
 import passwordResetRoutes from './routes/passwordResetRoutes';
 import userRoutes from './routes/userRoutes';
 import { errorHandler } from './middlewares/errorHandler';
@@ -26,6 +28,7 @@ app.use('/auth', authRoutes);
 app.use('/leads', leadRoutes);
 app.use('/integracoes', integracaoRoutes);
 app.use('/campanhas', campanhaRoutes);
+app.use('/relatorios', relatorioRoutes);
 app.use('/password-reset', passwordResetRoutes);
 app.use('/usuarios', userRoutes);
 
