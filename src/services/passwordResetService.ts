@@ -8,6 +8,11 @@ const TOKEN_EXPIRY_HOURS = 1;
 const SALT_ROUNDS = 10;
 
 export const requestPasswordReset = async (usuarioId: string): Promise<string> => {
+  // Verificar se o usuário existe
+  const user = await prisma.usuario.findUnique({ where: { id: usuarioId } });
+  if (!user) {
+    throw new Error('Usuário não encontrado.');
+  }
   const token = uuidv4();
   const expiraEm = new Date();
   expiraEm.setHours(expiraEm.getHours() + TOKEN_EXPIRY_HOURS);
