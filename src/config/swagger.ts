@@ -622,6 +622,136 @@ const swaggerDocument = {
         },
       },
     },
+    "/relatorios": {
+      post: {
+        summary: "Criar relatório",
+        description:
+          "Cria um novo relatório (métrica de campanha) com informações de aberturas, cliques e rejeições, vinculadas a uma campanha. Requer autenticação.",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  campanhaId: { type: "string", example: "uuid-campanha" },
+                  aberturas: { type: "number", example: 100 },
+                  cliques: { type: "number", example: 50 },
+                  rejeicoes: { type: "number", example: 10 },
+                  timestamp: { type: "string", format: "date-time", example: "2023-12-31T23:59:59Z" }
+                },
+                required: ["campanhaId", "aberturas", "cliques", "rejeicoes"],
+              },
+            },
+          },
+        },
+        responses: {
+          "201": { description: "Relatório criado com sucesso." },
+          "400": { description: "Dados inválidos." },
+          "401": { description: "Não autorizado." },
+          "500": { description: "Erro interno no servidor." },
+        },
+      },
+      get: {
+        summary: "Listar relatórios",
+        description: "Retorna uma lista de todos os relatórios de campanhas. Requer autenticação.",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Lista de relatórios.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/Relatorio" },
+                },
+              },
+            },
+          },
+          "401": { description: "Não autorizado." },
+          "500": { description: "Erro interno no servidor." },
+        },
+      },
+    },
+    "/relatorios/{id}": {
+      get: {
+        summary: "Obter relatório por ID",
+        description: "Recupera os detalhes de um relatório específico. Requer autenticação.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            description: "ID do relatório",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": { description: "Detalhes do relatório." },
+          "404": { description: "Relatório não encontrado." },
+          "401": { description: "Não autorizado." },
+          "500": { description: "Erro interno no servidor." },
+        },
+      },
+      patch: {
+        summary: "Atualizar relatório",
+        description: "Atualiza os dados de um relatório existente. Requer autenticação.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            description: "ID do relatório a ser atualizado",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  campanhaId: { type: "string" },
+                  aberturas: { type: "number" },
+                  cliques: { type: "number" },
+                  rejeicoes: { type: "number" },
+                  timestamp: { type: "string", format: "date-time" },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": { description: "Relatório atualizado com sucesso." },
+          "400": { description: "Dados inválidos." },
+          "401": { description: "Não autorizado." },
+          "500": { description: "Erro interno no servidor." },
+        },
+      },
+      delete: {
+        summary: "Remover relatório",
+        description: "Remove um relatório existente. Requer autenticação.",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            description: "ID do relatório a ser removido",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": { description: "Relatório removido com sucesso." },
+          "401": { description: "Não autorizado." },
+          "500": { description: "Erro interno no servidor." },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -648,6 +778,17 @@ const swaggerDocument = {
           camposCustom: { type: "object" },
           criadoEm: { type: "string", format: "date-time" },
           atualizadoEm: { type: "string", format: "date-time" },
+        },
+      },
+      Relatorio: {
+        type: "object",
+        properties: {
+          id: { type: "string", example: "uuid-relatorio" },
+          campanhaId: { type: "string", example: "uuid-campanha" },
+          aberturas: { type: "number", example: 100 },
+          cliques: { type: "number", example: 50 },
+          rejeicoes: { type: "number", example: 10 },
+          timestamp: { type: "string", format: "date-time", example: "2023-12-31T23:59:59Z" },
         },
       },
     },
