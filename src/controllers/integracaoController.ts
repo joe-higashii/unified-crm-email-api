@@ -1,15 +1,15 @@
 //integracaoController.ts
 
-import { Request, Response } from 'express';
-import { z } from 'zod';
+import { Request, Response } from "express";
+import { z } from "zod";
 import {
   createIntegracao,
   getIntegracoes,
   getIntegracaoById,
   updateIntegracao,
   deleteIntegracao,
-} from '../services/integracaoService';
-import { TipoIntegracao, ProvedorCRM } from '@prisma/client';
+} from "../services/integracaoService";
+import { TipoIntegracao, ProvedorCRM } from "@prisma/client";
 
 const integracaoSchema = z.object({
   tipo: z.nativeEnum(TipoIntegracao),
@@ -17,23 +17,29 @@ const integracaoSchema = z.object({
   modoTeste: z.boolean().optional(),
   credenciais: z.string(),
   usuarioId: z.string(),
-  sincronizadoEm: z.preprocess(arg => arg ? new Date(arg as string) : undefined, z.date().optional()),
+  sincronizadoEm: z.preprocess(
+    (arg) => (arg ? new Date(arg as string) : undefined),
+    z.date().optional()
+  ),
   camposExtras: z.any().optional(),
 });
 
-export const createIntegracaoController = async (req: Request, res: Response): Promise<void> => {
+export const createIntegracaoController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const data = integracaoSchema.parse(req.body);
     const integracao = await createIntegracao(data);
-    res.status(201).json({ message: 'Integração criada com sucesso!', integracao });
+    res.status(201).json({ message: "Integração criada com sucesso!", integracao });
     return;
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Dados inválidos', issues: error.errors, docs: '/api-docs/errors#createIntegracao' });
+      res.status(400).json({ error: "Dados inválidos", issues: error.errors, docs: "/api-docs/errors#createIntegracao" });
       return;
     }
     console.error(error);
-    res.status(500).json({ error: 'Erro ao criar integração.', docs: '/api-docs/errors#createIntegracao' });
+    res.status(500).json({ error: "Erro ao criar integração.", docs: "/api-docs/errors#createIntegracao" });
     return;
   }
 };
@@ -43,8 +49,8 @@ export const getIntegracoesController = async (req: Request, res: Response): Pro
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
     const { usuarioId } = req.query;
-    if (!usuarioId || typeof usuarioId !== 'string') {
-      res.status(400).json({ error: 'usuarioId é obrigatório como query param.', docs: '/api-docs/errors#getIntegracoes' });
+    if (!usuarioId || typeof usuarioId !== "string") {
+      res.status(400).json({ error: "usuarioId é obrigatório como query param.", docs: "/api-docs/errors#getIntegracoes" });
       return;
     }
     const result = await getIntegracoes(page, limit, usuarioId);
@@ -52,7 +58,7 @@ export const getIntegracoesController = async (req: Request, res: Response): Pro
     return;
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Erro ao obter integrações.', docs: '/api-docs/errors#getIntegracoes' });
+    res.status(500).json({ error: "Erro ao obter integrações.", docs: "/api-docs/errors#getIntegracoes" });
     return;
   }
 };
@@ -62,14 +68,14 @@ export const getIntegracaoByIdController = async (req: Request, res: Response): 
     const { id } = req.params;
     const integracao = await getIntegracaoById(id);
     if (!integracao) {
-      res.status(404).json({ error: 'Integração não encontrada.', docs: '/api-docs/errors#getIntegracaoById' });
+      res.status(404).json({ error: "Integração não encontrada.", docs: "/api-docs/errors#getIntegracaoById" });
       return;
     }
     res.status(200).json(integracao);
     return;
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Erro ao obter integração.', docs: '/api-docs/errors#getIntegracaoById' });
+    res.status(500).json({ error: "Erro ao obter integração.", docs: "/api-docs/errors#getIntegracaoById" });
     return;
   }
 };
@@ -79,15 +85,15 @@ export const updateIntegracaoController = async (req: Request, res: Response): P
     const { id } = req.params;
     const data = integracaoSchema.partial().parse(req.body);
     const integracao = await updateIntegracao(id, data);
-    res.status(200).json({ message: 'Integração atualizada com sucesso!', integracao });
+    res.status(200).json({ message: "Integração atualizada com sucesso!", integracao });
     return;
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Dados inválidos', issues: error.errors, docs: '/api-docs/errors#updateIntegracao' });
+      res.status(400).json({ error: "Dados inválidos", issues: error.errors, docs: "/api-docs/errors#updateIntegracao" });
       return;
     }
     console.error(error);
-    res.status(500).json({ error: 'Erro ao atualizar integração.', docs: '/api-docs/errors#updateIntegracao' });
+    res.status(500).json({ error: "Erro ao atualizar integração.", docs: "/api-docs/errors#updateIntegracao" });
     return;
   }
 };
@@ -96,11 +102,11 @@ export const deleteIntegracaoController = async (req: Request, res: Response): P
   try {
     const { id } = req.params;
     await deleteIntegracao(id);
-    res.status(200).json({ message: 'Integração removida com sucesso!' });
+    res.status(200).json({ message: "Integração removida com sucesso!" });
     return;
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Erro ao remover integração.', docs: '/api-docs/errors#deleteIntegracao' });
+    res.status(500).json({ error: "Erro ao remover integração.", docs: "/api-docs/errors#deleteIntegracao" });
     return;
   }
 };
