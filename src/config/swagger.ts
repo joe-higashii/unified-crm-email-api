@@ -6,7 +6,7 @@ const swaggerDocument = {
     title: "Unified CRM Email API",
     version: "1.0.0",
     description:
-      "API para integração entre CRMs e plataformas de email, com endpoints documentados, validação com Zod, tratamento de erros didático e suporte para usuários low-code/no-code. A documentação detalhada abaixo apresenta todas as operações disponíveis para cadastro, autenticação, gerenciamento de leads, integrações, campanhas, reset de senha e perfil do usuário.",
+      "API para integração entre CRMs e plataformas de email, com endpoints documentados, validação com Zod, tratamento de erros didático e suporte para usuários low-code/no-code. Esta documentação detalha todas as operações disponíveis para cadastro, autenticação, gerenciamento de leads, integrações, campanhas, relatórios, reset de senha e perfil do usuário. Os endpoints de listagem (getAll) agora suportam paginação, retornando metadados como total, totalPages e currentPage.",
   },
   servers: [
     {
@@ -125,11 +125,7 @@ const swaggerDocument = {
                   email: { type: "string", format: "email", example: "lead@example.com" },
                   nome: { type: "string", example: "Maria" },
                   telefone: { type: "string", example: "123456789" },
-                  status: {
-                    type: "string",
-                    enum: ["NOVO", "CONTATADO", "CONVERTIDO", "INATIVO"],
-                    example: "NOVO",
-                  },
+                  status: { type: "string", enum: ["NOVO", "CONTATADO", "CONVERTIDO", "INATIVO"], example: "NOVO" },
                   integracaoId: { type: "string", example: "uuid-integracao" },
                   camposCustom: { type: "object", example: { customField: "value" } },
                 },
@@ -153,17 +149,37 @@ const swaggerDocument = {
         },
       },
       get: {
-        summary: "Listar leads",
-        description: "Retorna uma lista de todos os leads cadastrados. Requer autenticação.",
+        summary: "Listar leads com paginação",
+        description:
+          "Retorna uma lista de leads cadastrados com paginação. Parâmetros 'page' e 'limit' são opcionais.",
         security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            description: "Número da página (padrão: 1)",
+            schema: { type: "integer", default: 1 },
+          },
+          {
+            name: "limit",
+            in: "query",
+            description: "Quantidade de itens por página (padrão: 10)",
+            schema: { type: "integer", default: 10 },
+          },
+        ],
         responses: {
           "200": {
-            description: "Lista de leads.",
+            description: "Lista de leads com metadados de paginação.",
             content: {
               "application/json": {
                 schema: {
-                  type: "array",
-                  items: { $ref: "#/components/schemas/Lead" },
+                  type: "object",
+                  properties: {
+                    leads: { type: "array", items: { $ref: "#/components/schemas/Lead" } },
+                    total: { type: "integer" },
+                    totalPages: { type: "integer" },
+                    currentPage: { type: "integer" },
+                  },
                 },
               },
             },
@@ -245,16 +261,12 @@ const swaggerDocument = {
                 type: "object",
                 properties: {
                   tipo: { type: "string", enum: ["CRM", "EMAIL_MARKETING"], example: "CRM" },
-                  provedor: {
-                    type: "string",
-                    enum: ["SALESFORCE", "ZOHO_CRM", "PIPEDRIVE", "HUBSPOT"],
-                    example: "SALESFORCE",
-                  },
+                  provedor: { type: "string", enum: ["SALESFORCE", "ZOHO_CRM", "PIPEDRIVE", "HUBSPOT"], example: "SALESFORCE" },
                   modoTeste: { type: "boolean", example: true },
                   credenciais: { type: "string", example: "chave_criptografada" },
                   usuarioId: { type: "string", example: "uuid-usuario" },
                   sincronizadoEm: { type: "string", format: "date-time", example: "2023-12-31T23:59:59Z" },
-                  camposExtras: { type: "object", example: { extraField: "value" } },
+                  camposExtras: { type: "object", example: { extraField: "value" } }
                 },
                 required: ["tipo", "provedor", "credenciais", "usuarioId"],
               },
@@ -269,9 +281,9 @@ const swaggerDocument = {
         },
       },
       get: {
-        summary: "Listar integrações",
+        summary: "Listar integrações com paginação",
         description:
-          "Retorna todas as integrações associadas ao usuário. O ID do usuário deve ser fornecido como query parameter. Requer autenticação.",
+          "Retorna todas as integrações associadas ao usuário com paginação. O ID do usuário deve ser fornecido como query parameter.",
         security: [{ bearerAuth: [] }],
         parameters: [
           {
@@ -281,9 +293,36 @@ const swaggerDocument = {
             required: true,
             schema: { type: "string" },
           },
+          {
+            name: "page",
+            in: "query",
+            description: "Número da página (padrão: 1)",
+            schema: { type: "integer", default: 1 },
+          },
+          {
+            name: "limit",
+            in: "query",
+            description: "Quantidade de itens por página (padrão: 10)",
+            schema: { type: "integer", default: 10 },
+          },
         ],
         responses: {
-          "200": { description: "Lista de integrações." },
+          "200": {
+            description: "Lista de integrações com metadados de paginação.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    integracoes: { type: "array", items: { $ref: "#/components/schemas/Integracao" } },
+                    total: { type: "integer" },
+                    totalPages: { type: "integer" },
+                    currentPage: { type: "integer" },
+                  },
+                },
+              },
+            },
+          },
           "400": { description: "Parâmetro 'usuarioId' obrigatório." },
           "401": { description: "Não autorizado." },
           "500": { description: "Erro interno no servidor." },
@@ -332,10 +371,7 @@ const swaggerDocument = {
                 type: "object",
                 properties: {
                   tipo: { type: "string", enum: ["CRM", "EMAIL_MARKETING"] },
-                  provedor: {
-                    type: "string",
-                    enum: ["SALESFORCE", "ZOHO_CRM", "PIPEDRIVE", "HUBSPOT"],
-                  },
+                  provedor: { type: "string", enum: ["SALESFORCE", "ZOHO_CRM", "PIPEDRIVE", "HUBSPOT"] },
                   modoTeste: { type: "boolean" },
                   credenciais: { type: "string" },
                   sincronizadoEm: { type: "string", format: "date-time" },
@@ -387,16 +423,8 @@ const swaggerDocument = {
                 properties: {
                   nome: { type: "string", example: "Campanha de Lançamento" },
                   template: { type: "string", example: "<html>...</html>" },
-                  agendamento: {
-                    type: "string",
-                    format: "date-time",
-                    example: "2023-12-31T23:59:59Z",
-                  },
-                  status: {
-                    type: "string",
-                    enum: ["RASCUNHO", "AGENDADA", "ENVIANDO", "ENVIADA", "CANCELADA"],
-                    example: "RASCUNHO",
-                  },
+                  agendamento: { type: "string", format: "date-time", example: "2023-12-31T23:59:59Z" },
+                  status: { type: "string", enum: ["RASCUNHO", "AGENDADA", "ENVIANDO", "ENVIADA", "CANCELADA"], example: "RASCUNHO" },
                   integracaoId: { type: "string", example: "uuid-integracao" },
                   parametros: { type: "object", example: { key: "value" } },
                   modoTeste: { type: "boolean", example: true },
@@ -414,11 +442,23 @@ const swaggerDocument = {
         },
       },
       get: {
-        summary: "Listar campanhas",
+        summary: "Listar campanhas com paginação",
         description:
-          "Retorna uma lista de campanhas. Pode ser filtrada por integracaoId (passada como query parameter). Requer autenticação.",
+          "Retorna uma lista de campanhas com paginação. Parâmetros 'page' e 'limit' são opcionais e pode ser filtrada pelo 'integracaoId'.",
         security: [{ bearerAuth: [] }],
         parameters: [
+          {
+            name: "page",
+            in: "query",
+            description: "Número da página (padrão: 1)",
+            schema: { type: "integer", default: 1 },
+          },
+          {
+            name: "limit",
+            in: "query",
+            description: "Quantidade de itens por página (padrão: 10)",
+            schema: { type: "integer", default: 10 },
+          },
           {
             name: "integracaoId",
             in: "query",
@@ -427,7 +467,22 @@ const swaggerDocument = {
           },
         ],
         responses: {
-          "200": { description: "Lista de campanhas." },
+          "200": {
+            description: "Lista de campanhas com metadados de paginação.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    campanhas: { type: "array", items: { $ref: "#/components/schemas/Campanha" } },
+                    total: { type: "integer" },
+                    totalPages: { type: "integer" },
+                    currentPage: { type: "integer" },
+                  },
+                },
+              },
+            },
+          },
           "401": { description: "Não autorizado." },
           "500": { description: "Erro interno no servidor." },
         },
@@ -477,10 +532,7 @@ const swaggerDocument = {
                   nome: { type: "string" },
                   template: { type: "string" },
                   agendamento: { type: "string", format: "date-time" },
-                  status: {
-                    type: "string",
-                    enum: ["RASCUNHO", "AGENDADA", "ENVIANDO", "ENVIADA", "CANCELADA"],
-                  },
+                  status: { type: "string", enum: ["RASCUNHO", "AGENDADA", "ENVIANDO", "ENVIADA", "CANCELADA"] },
                   parametros: { type: "object" },
                   modoTeste: { type: "boolean" },
                 },
@@ -518,8 +570,7 @@ const swaggerDocument = {
     "/password-reset/request": {
       post: {
         summary: "Solicitar reset de senha",
-        description:
-          "Gera um token de reset de senha para o usuário. Normalmente, esse token seria enviado por email (simulação).",
+        description: "Gera um token de reset de senha para o usuário. Normalmente, esse token seria enviado por email (simulação).",
         requestBody: {
           required: true,
           content: {
@@ -625,8 +676,7 @@ const swaggerDocument = {
     "/relatorios": {
       post: {
         summary: "Criar relatório",
-        description:
-          "Cria um novo relatório (métrica de campanha) com informações de aberturas, cliques e rejeições, vinculadas a uma campanha. Requer autenticação.",
+        description: "Cria um novo relatório (métrica de campanha) com informações de aberturas, cliques e rejeições, vinculadas a uma campanha. Requer autenticação.",
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
@@ -654,17 +704,36 @@ const swaggerDocument = {
         },
       },
       get: {
-        summary: "Listar relatórios",
-        description: "Retorna uma lista de todos os relatórios de campanhas. Requer autenticação.",
+        summary: "Listar relatórios com paginação",
+        description: "Retorna uma lista de relatórios de campanhas com paginação. Parâmetros 'page' e 'limit' são opcionais.",
         security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "page",
+            in: "query",
+            description: "Número da página (padrão: 1)",
+            schema: { type: "integer", default: 1 },
+          },
+          {
+            name: "limit",
+            in: "query",
+            description: "Quantidade de itens por página (padrão: 10)",
+            schema: { type: "integer", default: 10 },
+          },
+        ],
         responses: {
           "200": {
-            description: "Lista de relatórios.",
+            description: "Lista de relatórios com metadados de paginação.",
             content: {
               "application/json": {
                 schema: {
-                  type: "array",
-                  items: { $ref: "#/components/schemas/Relatorio" },
+                  type: "object",
+                  properties: {
+                    relatorios: { type: "array", items: { $ref: "#/components/schemas/Relatorio" } },
+                    total: { type: "integer" },
+                    totalPages: { type: "integer" },
+                    currentPage: { type: "integer" },
+                  },
                 },
               },
             },
@@ -769,13 +838,24 @@ const swaggerDocument = {
           email: { type: "string", format: "email", example: "lead@example.com" },
           nome: { type: "string", example: "Maria" },
           telefone: { type: "string", example: "123456789" },
-          status: {
-            type: "string",
-            enum: ["NOVO", "CONTATADO", "CONVERTIDO", "INATIVO"],
-            example: "NOVO",
-          },
+          status: { type: "string", enum: ["NOVO", "CONTATADO", "CONVERTIDO", "INATIVO"], example: "NOVO" },
           integracaoId: { type: "string", example: "uuid-integracao" },
           camposCustom: { type: "object" },
+          criadoEm: { type: "string", format: "date-time" },
+          atualizadoEm: { type: "string", format: "date-time" },
+        },
+      },
+      Campanha: {
+        type: "object",
+        properties: {
+          id: { type: "string", example: "uuid-campanha" },
+          nome: { type: "string", example: "Campanha de Lançamento" },
+          template: { type: "string", example: "<html>...</html>" },
+          agendamento: { type: "string", format: "date-time", example: "2023-12-31T23:59:59Z" },
+          status: { type: "string", enum: ["RASCUNHO", "AGENDADA", "ENVIANDO", "ENVIADA", "CANCELADA"], example: "RASCUNHO" },
+          integracaoId: { type: "string", example: "uuid-integracao" },
+          parametros: { type: "object", example: { key: "value" } },
+          modoTeste: { type: "boolean", example: true },
           criadoEm: { type: "string", format: "date-time" },
           atualizadoEm: { type: "string", format: "date-time" },
         },
@@ -789,6 +869,19 @@ const swaggerDocument = {
           cliques: { type: "number", example: 50 },
           rejeicoes: { type: "number", example: 10 },
           timestamp: { type: "string", format: "date-time", example: "2023-12-31T23:59:59Z" },
+        },
+      },
+      Integracao: {
+        type: "object",
+        properties: {
+          id: { type: "string", example: "uuid-integracao" },
+          tipo: { type: "string", enum: ["CRM", "EMAIL_MARKETING"], example: "CRM" },
+          provedor: { type: "string", enum: ["SALESFORCE", "ZOHO_CRM", "PIPEDRIVE", "HUBSPOT"], example: "SALESFORCE" },
+          modoTeste: { type: "boolean", example: true },
+          credenciais: { type: "string", example: "chave_criptografada" },
+          usuarioId: { type: "string", example: "uuid-usuario" },
+          sincronizadoEm: { type: "string", format: "date-time" },
+          camposExtras: { type: "object" },
         },
       },
     },

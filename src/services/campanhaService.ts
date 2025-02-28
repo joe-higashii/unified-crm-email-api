@@ -28,10 +28,18 @@ export const createCampanha = async (data: CampanhaData) => {
   return campanha;
 };
 
-export const getCampanhas = async (integracaoId?: string) => {
+export const getCampanhas = async (page: number = 1, limit: number = 10, integracaoId?: string) => {
+  const skip = (page - 1) * limit;
   const whereClause = integracaoId ? { integracaoId } : {};
-  const campanhas = await prisma.campanha.findMany({ where: whereClause });
-  return campanhas;
+  const campanhas = await prisma.campanha.findMany({
+    where: whereClause,
+    skip,
+    take: limit,
+    orderBy: { criadoEm: 'desc' },
+  });
+  const total = await prisma.campanha.count({ where: whereClause });
+  const totalPages = Math.ceil(total / limit);
+  return { campanhas, total, totalPages, currentPage: page };
 };
 
 export const getCampanhaById = async (id: string) => {

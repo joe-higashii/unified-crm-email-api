@@ -35,8 +35,10 @@ export const createLeadController = async (req: Request, res: Response): Promise
 
 export const getLeadsController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const leads = await getLeads();
-    res.status(200).json(leads);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const result = await getLeads(page, limit);
+    res.status(200).json(result);
     return;
   } catch (error) {
     console.error(error);

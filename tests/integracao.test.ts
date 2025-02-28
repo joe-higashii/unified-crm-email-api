@@ -1,15 +1,14 @@
-//campanha.test.ts
+//integracao.test.ts
 
 import request from 'supertest';
 import app from '../src/app';
 
-describe('Campanhas Endpoints', () => {
+describe('Integrações Endpoints', () => {
   let token: string;
-  let campanhaId: string;
   let integracaoId: string;
   const userData = {
-    nome: "Campaign Tester",
-    email: `campaigntester+${Date.now()}@example.com`,
+    nome: "Integration Tester",
+    email: `integrationtester+${Date.now()}@example.com`,
     senha: "password123"
   };
 
@@ -29,7 +28,7 @@ describe('Campanhas Endpoints', () => {
       tipo: "CRM",
       provedor: "SALESFORCE",
       credenciais: "dummy-credenciais",
-      usuarioId: usuarioId,
+      usuarioId,
     };
 
     const getIntegracaoRes = await request(app)
@@ -47,50 +46,21 @@ describe('Campanhas Endpoints', () => {
     }
   });
 
-  it('should create a new campanha', async () => {
-    const campanhaData = {
-      nome: "New Campaign",
-      template: "<html>Campaign Template</html>",
-      agendamento: new Date().toISOString(),
-      integracaoId: integracaoId,
-      parametros: { key: "value" }
-    };
+  it('should list integrações with pagination', async () => {
+    const profileRes = await request(app)
+      .get('/usuarios/me')
+      .set('Authorization', `Bearer ${token}`);
+    const usuarioId = profileRes.body.id;
     const res = await request(app)
-      .post('/campanhas')
+      .get('/integracoes')
       .set('Authorization', `Bearer ${token}`)
-      .send(campanhaData);
-    expect(res.statusCode).toEqual(201);
-    expect(res.body).toHaveProperty('campanha');
-    campanhaId = res.body.campanha.id;
-  });
-
-  it('should list campanhas with pagination', async () => {
-    const res = await request(app)
-      .get('/campanhas')
-      .set('Authorization', `Bearer ${token}`)
-      .query({ page: 1, limit: 10, integracaoId });
+      .query({ page: 1, limit: 10, usuarioId });
     expect(res.statusCode).toEqual(200);
     expect(typeof res.body).toBe("object");
-    expect(Array.isArray(res.body.campanhas)).toBe(true);
+    expect(Array.isArray(res.body.integracoes)).toBe(true);
     expect(res.body).toHaveProperty("total");
     expect(res.body).toHaveProperty("totalPages");
     expect(res.body).toHaveProperty("currentPage");
-  });
-
-  it('should update a campanha', async () => {
-    const res = await request(app)
-      .patch(`/campanhas/${campanhaId}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({ nome: "Updated Campaign" });
-    expect(res.statusCode).toEqual(200);
-    expect(res.body.campanha.nome).toEqual("Updated Campaign");
-  });
-
-  it('should delete a campanha', async () => {
-    const res = await request(app)
-      .delete(`/campanhas/${campanhaId}`)
-      .set('Authorization', `Bearer ${token}`);
-    expect(res.statusCode).toEqual(200);
   });
 });
 

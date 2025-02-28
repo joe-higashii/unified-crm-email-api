@@ -10,36 +10,45 @@ describe('Relatórios Endpoints', () => {
   let integracaoId: string;
   const userData = {
     nome: "Report Tester",
-    email: "reporttester@example.com",
+    email: `reporttester+${Date.now()}@example.com`,
     senha: "password123"
   };
 
   beforeAll(async () => {
-    // Registrar e logar o usuário
     await request(app).post('/auth/register').send(userData);
     const loginRes = await request(app)
       .post('/auth/login')
       .send({ email: userData.email, senha: userData.senha });
     token = loginRes.body.token;
 
-    // Criar uma Integração
+    const profileRes = await request(app)
+      .get('/usuarios/me')
+      .set('Authorization', `Bearer ${token}`);
+    const usuarioId = profileRes.body.id;
+
+    // Criar ou obter uma integração
     const integracaoData = {
       tipo: "CRM",
       provedor: "SALESFORCE",
       credenciais: "dummy-credenciais",
-      usuarioId: "",
+      usuarioId,
     };
-    const profileRes = await request(app)
-      .get('/usuarios/me')
-      .set('Authorization', `Bearer ${token}`);
-    integracaoData.usuarioId = profileRes.body.id;
-    const integracaoRes = await request(app)
-      .post('/integracoes')
-      .set('Authorization', `Bearer ${token}`)
-      .send(integracaoData);
-    integracaoId = integracaoRes.body.integracao.id;
 
-    // Criar uma Campanha para usar na criação do relatório
+    const getIntegracaoRes = await request(app)
+      .get('/integracoes')
+      .set('Authorization', `Bearer ${token}`)
+      .query({ usuarioId });
+    if (getIntegracaoRes.body.integracoes && getIntegracaoRes.body.integracoes.length > 0) {
+      integracaoId = getIntegracaoRes.body.integracoes[0].id;
+    } else {
+      const createIntegracaoRes = await request(app)
+        .post('/integracoes')
+        .set('Authorization', `Bearer ${token}`)
+        .send(integracaoData);
+      integracaoId = createIntegracaoRes.body.integracao.id;
+    }
+
+    // Criar uma campanha para usar na criação do relatório
     const campanhaData = {
       nome: "Campaign for Report",
       template: "<html>Template</html>",
@@ -56,7 +65,7 @@ describe('Relatórios Endpoints', () => {
 
   it('should create a new relatório', async () => {
     const relatorioData = {
-      campanhaId: campanhaId,
+      campanhaId,
       aberturas: 100,
       cliques: 50,
       rejeicoes: 10,
@@ -71,12 +80,17 @@ describe('Relatórios Endpoints', () => {
     relatorioId = res.body.relatorio.id;
   });
 
-  it('should list relatórios', async () => {
+  it('should list relatórios with pagination', async () => {
     const res = await request(app)
       .get('/relatorios')
-      .set('Authorization', `Bearer ${token}`);
+      .set('Authorization', `Bearer ${token}`)
+      .query({ page: 1, limit: 10 });
     expect(res.statusCode).toEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(typeof res.body).toBe("object");
+    expect(Array.isArray(res.body.relatorios)).toBe(true);
+    expect(res.body).toHaveProperty("total");
+    expect(res.body).toHaveProperty("totalPages");
+    expect(res.body).toHaveProperty("currentPage");
   });
 
   it('should update a relatório', async () => {

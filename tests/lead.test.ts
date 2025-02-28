@@ -9,7 +9,7 @@ describe('Leads Endpoints', () => {
   let integracaoId: string;
   const userData = {
     nome: "Lead Tester",
-    email: "leadtester@example.com",
+    email: `leadtester+${Date.now()}@example.com`,
     senha: "password123"
   };
 
@@ -21,32 +21,40 @@ describe('Leads Endpoints', () => {
       .send({ email: userData.email, senha: userData.senha });
     token = loginRes.body.token;
 
-    // Criar uma Integração para o usuário
+    // Obter o ID do usuário
+    const profileRes = await request(app)
+      .get('/usuarios/me')
+      .set('Authorization', `Bearer ${token}`);
+    const usuarioId = profileRes.body.id;
+
+    // Criar ou obter a integração para o usuário
     const integracaoData = {
       tipo: "CRM",
       provedor: "SALESFORCE",
       credenciais: "dummy-credenciais",
-      usuarioId: "", // preencher com o ID do usuário (obtido no perfil)
+      usuarioId: usuarioId,
     };
 
-    // Obter o perfil para ter o ID do usuário
-    const profileRes = await request(app)
-      .get('/usuarios/me')
-      .set('Authorization', `Bearer ${token}`);
-    integracaoData.usuarioId = profileRes.body.id;
-
-    const integracaoRes = await request(app)
-      .post('/integracoes')
+    const getIntegracaoRes = await request(app)
+      .get('/integracoes')
       .set('Authorization', `Bearer ${token}`)
-      .send(integracaoData);
-    integracaoId = integracaoRes.body.integracao.id;
+      .query({ usuarioId });
+    if (getIntegracaoRes.body.integracoes && getIntegracaoRes.body.integracoes.length > 0) {
+      integracaoId = getIntegracaoRes.body.integracoes[0].id;
+    } else {
+      const createIntegracaoRes = await request(app)
+        .post('/integracoes')
+        .set('Authorization', `Bearer ${token}`)
+        .send(integracaoData);
+      integracaoId = createIntegracaoRes.body.integracao.id;
+    }
   });
 
   it('should create a new lead', async () => {
     const leadData = {
       email: "lead@example.com",
       nome: "Test Lead",
-      integracaoId: integracaoId, // usar a integração criada
+      integracaoId: integracaoId,
     };
     const res = await request(app)
       .post('/leads')
@@ -57,12 +65,17 @@ describe('Leads Endpoints', () => {
     leadId = res.body.lead.id;
   });
 
-  it('should list leads', async () => {
+  it('should list leads with pagination', async () => {
     const res = await request(app)
       .get('/leads')
-      .set('Authorization', `Bearer ${token}`);
+      .set('Authorization', `Bearer ${token}`)
+      .query({ page: 1, limit: 10 });
     expect(res.statusCode).toEqual(200);
-    expect(Array.isArray(res.body)).toBe(true);
+    expect(typeof res.body).toBe("object");
+    expect(Array.isArray(res.body.leads)).toBe(true);
+    expect(res.body).toHaveProperty("total");
+    expect(res.body).toHaveProperty("totalPages");
+    expect(res.body).toHaveProperty("currentPage");
   });
 
   it('should update a lead', async () => {

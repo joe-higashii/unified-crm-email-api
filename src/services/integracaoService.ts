@@ -3,7 +3,7 @@
 import prisma from '../config/database';
 import { TipoIntegracao, ProvedorCRM } from '@prisma/client';
 
-interface IntegracaoData {
+export interface IntegracaoData {
   tipo: TipoIntegracao;
   provedor: ProvedorCRM;
   modoTeste?: boolean;
@@ -14,25 +14,33 @@ interface IntegracaoData {
 }
 
 export const createIntegracao = async (data: IntegracaoData) => {
-  const integracao = await prisma.integracao.create({
-    data: {
-      tipo: data.tipo,
-      provedor: data.provedor,
-      modoTeste: data.modoTeste ?? true,
-      credenciais: data.credenciais,
+  // Verifica se já existe uma integração para o mesmo usuário e provedor
+  const integracaoExistente = await prisma.integracao.findFirst({
+    where: {
       usuarioId: data.usuarioId,
-      sincronizadoEm: data.sincronizadoEm,
-      camposExtras: data.camposExtras,
+      provedor: data.provedor,
     },
+  });
+  if (integracaoExistente) {
+    return integracaoExistente;
+  }
+  const integracao = await prisma.integracao.create({
+    data,
   });
   return integracao;
 };
 
-export const getIntegracoes = async (usuarioId: string) => {
+export const getIntegracoes = async (page: number = 1, limit: number = 10, usuarioId: string) => {
+  const skip = (page - 1) * limit;
   const integracoes = await prisma.integracao.findMany({
     where: { usuarioId },
+    skip,
+    take: limit,
+    orderBy: { id: 'asc' },
   });
-  return integracoes;
+  const total = await prisma.integracao.count({ where: { usuarioId } });
+  const totalPages = Math.ceil(total / limit);
+  return { integracoes, total, totalPages, currentPage: page };
 };
 
 export const getIntegracaoById = async (id: string) => {
