@@ -1,7 +1,7 @@
 //integracaoService.ts
 
-import prisma from '../config/database';
-import { TipoIntegracao, ProvedorCRM } from '@prisma/client';
+import prisma from "../config/database";
+import { TipoIntegracao, ProvedorCRM } from "@prisma/client";
 
 export interface IntegracaoData {
   tipo: TipoIntegracao;
@@ -14,7 +14,7 @@ export interface IntegracaoData {
 }
 
 export const createIntegracao = async (data: IntegracaoData) => {
-  // Verifica se já existe uma integração para o mesmo usuário e provedor
+  // Verifica se já existe uma integração para este usuário com este provedor
   const integracaoExistente = await prisma.integracao.findFirst({
     where: {
       usuarioId: data.usuarioId,
@@ -36,7 +36,7 @@ export const getIntegracoes = async (page: number = 1, limit: number = 10, usuar
     where: { usuarioId },
     skip,
     take: limit,
-    orderBy: { id: 'asc' },
+    orderBy: { id: "asc" },
   });
   const total = await prisma.integracao.count({ where: { usuarioId } });
   const totalPages = Math.ceil(total / limit);

@@ -1,32 +1,33 @@
 //errorHandler.ts
 
 import { Request, Response, NextFunction } from 'express';
-
-export class APIError extends Error {
-  public code: number;
-  public userGuidance?: string;
-  constructor(code: number, message: string, userGuidance?: string) {
-    super(message);
-    this.code = code;
-    this.userGuidance = userGuidance;
-  }
-}
+import logger from '../config/logger';
+import { APIError } from '../errors/APIError';
 
 export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction): void => {
-  console.error('Erro capturado:', err);
+  logger.error({
+    message: err.message,
+    stack: err.stack,
+    statusCode: err.code || 500,
+    method: req.method,
+    url: req.originalUrl,
+    ip: req.ip,
+    userGuidance: err.userGuidance || "Entre em contato com o suporte se o problema persistir.",
+    timestamp: new Date().toISOString(),
+  });
+
   if (err instanceof APIError) {
     res.status(err.code).json({
       error: err.message,
       guidance: err.userGuidance,
-      docs: '/api-docs/errors'
+      docs: "/api-docs/errors",
     });
     return;
   }
   res.status(500).json({
-    error: 'Erro interno no servidor.',
-    guidance: 'Entre em contato com o suporte se o problema persistir.',
-    docs: '/api-docs/errors#500'
+    error: "Erro interno no servidor.",
+    guidance: "Entre em contato com o suporte se o problema persistir.",
+    docs: "/api-docs/errors#500",
   });
-  return;
 };
 
