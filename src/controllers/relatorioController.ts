@@ -37,8 +37,10 @@ export const createRelatorioController = async (req: Request, res: Response): Pr
 
 export const getRelatoriosController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const relatorios = await getRelatorios();
-    res.status(200).json(relatorios);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const result = await getRelatorios(page, limit);
+    res.status(200).json(result);
     return;
   } catch (error) {
     console.error(error);

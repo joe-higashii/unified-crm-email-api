@@ -23,9 +23,16 @@ export const createRelatorio = async (data: RelatorioData) => {
   return relatorio;
 };
 
-export const getRelatorios = async () => {
-  const relatorios = await prisma.metricaCampanha.findMany();
-  return relatorios;
+export const getRelatorios = async (page: number = 1, limit: number = 10) => {
+  const skip = (page - 1) * limit;
+  const relatorios = await prisma.metricaCampanha.findMany({
+    skip,
+    take: limit,
+    orderBy: { timestamp: 'desc' },
+  });
+  const total = await prisma.metricaCampanha.count();
+  const totalPages = Math.ceil(total / limit);
+  return { relatorios, total, totalPages, currentPage: page };
 };
 
 export const getRelatorioById = async (id: string) => {

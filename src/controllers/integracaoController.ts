@@ -40,13 +40,15 @@ export const createIntegracaoController = async (req: Request, res: Response): P
 
 export const getIntegracoesController = async (req: Request, res: Response): Promise<void> => {
   try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
     const { usuarioId } = req.query;
     if (!usuarioId || typeof usuarioId !== 'string') {
       res.status(400).json({ error: 'usuarioId é obrigatório como query param.', docs: '/api-docs/errors#getIntegracoes' });
       return;
     }
-    const integracoes = await getIntegracoes(usuarioId);
-    res.status(200).json(integracoes);
+    const result = await getIntegracoes(page, limit, usuarioId);
+    res.status(200).json(result);
     return;
   } catch (error) {
     console.error(error);

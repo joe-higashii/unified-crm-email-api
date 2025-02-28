@@ -34,9 +34,10 @@ export const createCampanhaController = async (req: Request, res: Response): Pro
 
 export const getCampanhasController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { integracaoId } = req.query;
-    const campanhas = await getCampanhas(integracaoId as string | undefined);
-    res.status(200).json(campanhas);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const { campanhas, total, totalPages, currentPage } = await getCampanhas(page, limit, req.query.integracaoId as string | undefined);
+    res.status(200).json({ campanhas, total, totalPages, currentPage });
     return;
   } catch (error) {
     console.error(error);

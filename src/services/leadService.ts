@@ -17,9 +17,16 @@ export const createLead = async (leadData: {
   return lead;
 };
 
-export const getLeads = async () => {
-  const leads = await prisma.lead.findMany();
-  return leads;
+export const getLeads = async (page: number = 1, limit: number = 10) => {
+  const skip = (page - 1) * limit;
+  const leads = await prisma.lead.findMany({
+    skip,
+    take: limit,
+    orderBy: { criadoEm: 'desc' },
+  });
+  const total = await prisma.lead.count();
+  const totalPages = Math.ceil(total / limit);
+  return { leads, total, totalPages, currentPage: page };
 };
 
 export const updateLead = async (id: string, data: Partial<{
